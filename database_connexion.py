@@ -1,15 +1,34 @@
+import os
 import sqlite3
 
+con = None
+cur = None
 
-con = sqlite3.connect("testDB.db")
-cur = con.cursor()
+def check_database():
+    global con, cur
+    if not os.path.exists("testDB.db"):
+        con = sqlite3.connect("testDB.db")
+        cur = con.cursor()
+        creating_table()
+        inserting_values()
+    else:
+        con = sqlite3.connect("testDB.db")
+        cur = con.cursor()
+        if not table_exists("books"):
+            creating_table()
+            inserting_values()
+
+def table_exists(table_name):
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+    result = cur.fetchone()
+    return result is not None
 
 def creating_table():
     try:
         cur.execute("CREATE TABLE books(id, title, author)")
-        print("Table has been created.")
-    except:
-        print('Table already exists.')
+        print("Table 'books' has been created.")
+    except sqlite3.OperationalError:
+        print("Table 'books' already exists.")
 
 def inserting_values():
     cur.execute("""
@@ -20,6 +39,9 @@ def inserting_values():
         (4, 'Before coffee gets cold', 'Toshikazu Kawaguchi')
     """)
     con.commit()
-    
-creating_table()
-inserting_values()
+
+def main():
+    check_database()
+
+if __name__ == "__main__":
+    main()
